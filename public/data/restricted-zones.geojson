@@ -1,0 +1,8 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "coverageComplete": false,
+    "message": "Official restricted airspace data is not yet available. No verified regulatory boundaries or live NOTAM feed are included."
+  },
+  "features": []
+}
