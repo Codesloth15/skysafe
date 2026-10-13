@@ -4,7 +4,14 @@ import { services } from '../../app/services';
 import { useExplorer } from '../../app/store/use-explorer';
 import { deduplicateAirports } from '../../domain/services/geography';
 import { emptyAirspace } from '../../infrastructure/adapters/geojson';
-import type { Airport } from '../../domain/entities';
+import type { Airport, SensitiveEstablishment } from '../../domain/entities';
+export const useEstablishments = () =>
+  useQuery<SensitiveEstablishment[]>({
+    queryKey: ['osm-establishments'],
+    queryFn: () => [],
+    enabled: false,
+    initialData: [],
+  });
 export function useClock() {
   const [clock, setClock] = useState(() => Date.now());
   useEffect(() => {

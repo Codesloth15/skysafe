@@ -14,6 +14,11 @@ const rows: {
 }[] = [
   { key: 'airports', label: 'Airports', color: '#2563eb' },
   { key: 'heliports', label: 'Heliports', color: '#0891b2' },
+  {
+    key: 'establishments',
+    label: 'Military, police & prisons',
+    color: '#be123c',
+  },
   { key: 'proximity', label: 'Airport proximity', color: '#eab308' },
   {
     key: 'prohibited',

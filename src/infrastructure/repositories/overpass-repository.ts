@@ -1,16 +1,34 @@
 import { z } from 'zod';
 import type { ISupplementaryAirportRepository } from '../../domain/repositories';
-import type { Airport, MapBounds } from '../../domain/entities';
+import type {
+  Airport,
+  MapBounds,
+  SupplementaryArea,
+} from '../../domain/entities';
+import {
+  establishmentSchema,
+  normalizeEstablishments,
+} from '../adapters/establishments';
 import { normalizeOverpass, airportSchema } from '../adapters/airports';
 import { readStored, writeStored } from '../cache/storage';
 import { request } from '../api/http';
 const cacheSchema = z
-  .object({ at: z.number(), airports: z.array(airportSchema) })
+  .object({
+    at: z.number(),
+    airports: z.array(airportSchema),
+    establishments: z.array(establishmentSchema),
+  })
   .nullable();
 export class OverpassAirportRepository implements ISupplementaryAirportRepository {
   private lastRequest = 0;
   private pending = false;
   async getArea(bounds: MapBounds, signal?: AbortSignal): Promise<Airport[]> {
+    return (await this.getAreaData(bounds, signal)).airports;
+  }
+  async getAreaData(
+    bounds: MapBounds,
+    signal?: AbortSignal,
+  ): Promise<SupplementaryArea> {
     const { south, west, north, east } = bounds;
     if (
       ![south, west, north, east].every(Number.isFinite) ||
@@ -27,12 +45,12 @@ export class OverpassAirportRepository implements ISupplementaryAirportRepositor
         'Zoom in on a Philippine area before loading nearby OSM features.',
       );
     const key =
-      'osm:' +
+      'osm-area-v2:' +
       Object.values(bounds)
         .map((v) => v.toFixed(2))
         .join(':');
     const cache = readStored(key, cacheSchema, null);
-    if (cache && Date.now() - cache.at < 86400000) return cache.airports;
+    if (cache && Date.now() - cache.at < 86400000) return cache;
     const globalLast = readStored('osm-last-request', z.number(), 0);
     if (
       this.pending ||
@@ -43,12 +61,20 @@ export class OverpassAirportRepository implements ISupplementaryAirportRepositor
     writeStored('osm-last-request', this.lastRequest);
     this.pending = true;
     try {
+      const bbox = [south, west, north, east].join(',');
       const query =
-        '[out:json][timeout:25];(nwr["aeroway"="aerodrome"](' +
-        [south, west, north, east].join(',') +
-        ');nwr["aeroway"="heliport"](' +
-        [south, west, north, east].join(',') +
-        '););out center;';
+        '[out:json][timeout:25];(' +
+        [
+          '["aeroway"="aerodrome"]',
+          '["aeroway"="heliport"]',
+          '["landuse"="military"]',
+          '["military"]',
+          '["amenity"="police"]',
+          '["amenity"="prison"]',
+        ]
+          .map((filter) => `nwr${filter}(${bbox});`)
+          .join('') +
+        ');out center;';
       const data = await request(
         import.meta.env.VITE_OVERPASS_URL ||
           'https://overpass-api.de/api/interpreter',
@@ -61,10 +87,11 @@ export class OverpassAirportRepository implements ISupplementaryAirportRepositor
         30000,
       );
       const airports = normalizeOverpass(data);
-      writeStored(key, { at: Date.now(), airports });
-      return airports;
+      const establishments = normalizeEstablishments(data);
+      writeStored(key, { at: Date.now(), airports, establishments });
+      return { airports, establishments };
     } catch (error) {
-      if (cache && !signal?.aborted) return cache.airports;
+      if (cache && !signal?.aborted) return cache;
       throw error;
     } finally {
       this.pending = false;

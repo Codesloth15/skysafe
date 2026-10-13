@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 export function readStored<T>(
   key: string,
-  schema: z.ZodType<T>,
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
   fallback: T,
 ): T {
   try {

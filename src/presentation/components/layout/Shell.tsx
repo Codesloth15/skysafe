@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
   ShieldQuestion,
   PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useExplorer } from '../../../app/store/use-explorer';
@@ -48,7 +49,13 @@ export default function Shell({ children }: { children: ReactNode }) {
         <div className="sidebar-caption">FLIGHT WORKSPACE</div>
         <nav aria-label="Main navigation">
           {links.map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} end={to === '/explore'} title={label}>
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/explore'}
+              title={label}
+              aria-label={label}
+            >
               <Icon size={19} />
               <span>{label}</span>
               {to === '/explore' && <span className="nav-dot" />}
@@ -70,11 +77,16 @@ export default function Shell({ children }: { children: ReactNode }) {
               Philippines<small>INITIAL COVERAGE</small>
             </div>
             <button
-              title="Collapse sidebar"
-              aria-label="Collapse sidebar"
+              title={compact ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={compact ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!compact}
               onClick={() => setCompact(!compact)}
             >
-              <PanelLeftClose size={17} />
+              {compact ? (
+                <PanelLeftOpen size={17} />
+              ) : (
+                <PanelLeftClose size={17} />
+              )}
             </button>
           </div>
         </div>
