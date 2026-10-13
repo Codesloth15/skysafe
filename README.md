@@ -35,6 +35,10 @@ The preparation script parses quoted CSV values, filters PH records, validates a
 - Turf geodesic airport distances and configurable 3/5/10 km proximity rings. Rings appear from zoom level 8, with up to 100 rendered at a time; all loaded airports are still considered in assessments.
 - Local-area Overpass supplements via **Load nearby OSM**, from zoom level 10. Requests cover a 0.3° square around the center, are cached, and enforce a 30-second cooldown. Provider failures leave prepared airport data available.
 - Verified GeoJSON Polygon/MultiPolygon support, overlapping restrictions, effective dates, provenance and altitude notices.
+- Military installations, police stations, and prisons loaded through **Load nearby OSM**, with a toggleable map layer, source popups, and nearby establishment warnings. These reference points do not establish legal no-fly boundaries.
+- Interactive **Plan flight** mode: use geolocation or a map start, add and drag up to 30 waypoints, undo/remove points, fit the route, and include a return leg. A custom FPV icon previews the flight along a highlighted route. Plans remain in memory during this session.
+- Planning rejects starts and route edits inside or across verified prohibited/restricted zones, including return legs and new connections created by deleting a waypoint. Departure, wind, and airspace updates revalidate existing drafts and disable preview on conflicts. Hiding a layer cannot bypass checks. Loading/failed airspace data blocks new routes; an empty successfully loaded dataset still means incomplete coverage, not flight clearance.
+- DJI FPV profile with Normal/Sport/Manual speed limits, departure in Philippine time, time budget, cruise assumption, reserve, and takeoff/landing/hover allowance. Forecast or manual wind changes route-time estimates. Cyan marks the portion within the time budget, amber the excess, and red wind issues or verified airspace intersections. These are estimates, not flight clearance or an executable DJI mission.
 - Favorites with rename/delete; persisted layer, theme, base-map and radius preferences; light/dark themes and mobile bottom sheet.
 - Geolocation, fullscreen, source metadata, skeletons and explicit provider/data error states.
 
@@ -69,6 +73,8 @@ Unit and component tests use synthetic fixtures only. Browser tests use the incl
 Import this directory as a Vite project. Build command: `npm run build`. Output: `dist`. The included `vercel.json` supports direct navigation to client routes. No deployment has been published automatically. Refresh and review your data snapshot before deployment and ensure provider usage remains appropriate.
 
 See [architecture](docs/architecture.md) for layer boundaries and design decisions.
+
+See [next feature: live drone GPS tracking](NEXT_FEATURE.md) for the proposed integration, DJI FPV compatibility limits, and implementation acceptance criteria.
 
 ### Landing and workspace
 

@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, GeoJSON, CircleMarker } from 'react-leaflet';
 import { featureCollection, feature } from '@turf/turf';
 import AirportClusterMarkers from './AirportClusterMarkers';
+import EstablishmentMarkers from './EstablishmentMarkers';
 import MapBehavior from './MapBehavior';
 import MapControls from './MapControls';
 import { activeVerifiedZones } from '../../../domain/services/assessment';
@@ -14,8 +15,11 @@ import {
   satelliteAvailable,
 } from '../../../shared/constants/map';
 import type { MapBounds } from '../../../domain/entities';
+import { useFlightPlan } from '../../../app/store/use-flight-plan';
+import FlightRoute from './FlightRoute';
 export default function MapView({ onLayers }: { onLayers: () => void }) {
   const frame = useRef<HTMLDivElement>(null);
+  const { active: planning, drawing, points, setDrawing } = useFlightPlan();
   const [viewport, setViewport] = useState<{ bounds: MapBounds; zoom: number }>(
     { bounds: { south: 4, west: 116, north: 22, east: 127 }, zoom: 6 },
   );
@@ -80,7 +84,11 @@ export default function MapView({ onLayers }: { onLayers: () => void }) {
   const satellite = basemap === 'satellite' && satelliteAvailable;
   return (
     <div
-      className={'leaflet-frame ' + (satellite ? 'satellite' : 'street')}
+      className={
+        'leaflet-frame ' +
+        (satellite ? 'satellite' : 'street') +
+        (planning ? ' planning' : '')
+      }
       ref={frame}
     >
       <MapContainer
@@ -141,7 +149,11 @@ export default function MapView({ onLayers }: { onLayers: () => void }) {
           }}
         />
         <AirportClusterMarkers airports={visible} zoom={viewport.zoom} />
-        {selected && (
+        {layers.establishments && (
+          <EstablishmentMarkers bounds={viewport.bounds} />
+        )}
+        {planning && <FlightRoute />}
+        {selected && !planning && (
           <>
             <CircleMarker
               center={[selected.latitude, selected.longitude]}
@@ -161,6 +173,16 @@ export default function MapView({ onLayers }: { onLayers: () => void }) {
           </>
         )}
       </MapContainer>
+      {planning && drawing && (
+        <div className="route-instruction" role="status">
+          <span>
+            {points.length
+              ? `${points.length} points · tap to add, drag to move`
+              : 'Tap the map to set your start'}
+          </span>
+          <button onClick={() => setDrawing(false)}>Done</button>
+        </div>
+      )}
       {(isPending || error || tileError) && (
         <div
           className={'map-data-state ' + (error ? 'error' : '')}
@@ -190,6 +212,10 @@ export default function MapView({ onLayers }: { onLayers: () => void }) {
           <span>
             <i style={{ background: '#eab308' }} />
             Proximity advisory
+          </span>
+          <span>
+            <i style={{ background: '#be123c' }} />
+            Military, police &amp; prisons
           </span>
           <span>
             <i style={{ background: '#ef4444' }} />

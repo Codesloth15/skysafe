@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './flight-planner.css';
 :root {
   font-family:
     Inter,
@@ -1124,13 +1125,30 @@ small {
   flex: 1;
   min-width: 0;
 }
-.airport-text a {
+.location-focus {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.location-focus:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+.location-focus:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+.airport-text .location-focus {
   display: block;
   font-size: 10px;
   font-weight: 600;
   line-height: 1.5;
 }
-.airport-text a:hover {
+.airport-text .location-focus:hover {
   color: var(--blue);
 }
 .airport-text small {
@@ -1555,7 +1573,7 @@ small {
 [data-theme='dark'] .leaflet-container {
   background: #1a2b40;
 }
-.compact {
+.app-shell.compact {
   grid-template-columns: 76px minmax(0, 1fr);
 }
 .compact .sidebar {
@@ -1582,6 +1600,9 @@ small {
 }
 .compact .country button {
   margin: 0;
+}
+.map-tools .mobile-more-tools {
+  display: none;
 }
 .sr-only {
   position: absolute;
@@ -1741,7 +1762,7 @@ small {
     font-size: 21px;
   }
 }
-@media (max-width: 700px) {
+@media (max-width: 920px) {
   .app-shell,
   .compact {
     display: flex;
@@ -1834,15 +1855,20 @@ small {
   .page-heading .text-link {
     font-size: 9px;
   }
+  .explore-page > .page-heading {
+    display: none;
+  }
   .explorer-grid {
-    display: block;
+    display: flex;
+    flex-direction: column;
     position: relative;
   }
   .map-frame {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
   }
   .assessment-panel {
-    position: absolute;
+    position: relative;
     left: 0;
     right: 0;
     bottom: 0;
@@ -1852,9 +1878,11 @@ small {
     max-height: 82%;
     box-shadow: 0 -5px 25px #0b132b14;
     height: 54px;
+    flex-shrink: 0;
     transition: height 0.25s ease;
   }
   .assessment-panel.expanded {
+    position: absolute;
     height: 82%;
   }
   .sheet-handle {
@@ -1897,21 +1925,40 @@ small {
     padding-top: 7px;
   }
   .map-tools {
-    top: 14px;
+    top: 12px;
     right: 12px;
     padding: 3px;
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
   }
   .map-tools button {
-    width: 35px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
+  }
+  .map-tools .mobile-more-tools {
+    display: flex;
+  }
+  .map-tools .secondary-map-tool,
+  .map-tools .tool-separator,
+  .osm-button {
+    display: none;
+  }
+  .more-open .secondary-map-tool,
+  .more-open .osm-button {
+    display: flex;
   }
   .osm-button {
-    left: 12px;
-    top: 14px;
-    font-size: 9px;
+    left: auto;
+    right: 12px;
+    top: 114px;
+    min-height: 44px;
+    width: 144px;
+    justify-content: center;
+    font-size: 10px;
     padding: 10px;
   }
   .map-caption {
+    display: none;
     bottom: 115px;
     font-size: 8px;
     width: max-content;
@@ -1922,25 +1969,26 @@ small {
   }
   .map-legend {
     left: 12px;
-    bottom: 76px;
+    bottom: 24px;
     min-width: 108px;
     font-size: 9px;
   }
   .ring-note {
+    display: none;
     right: 12px;
     bottom: 81px;
     font-size: 7px;
     max-width: 51%;
   }
   .leaflet-control-attribution {
-    bottom: 54px !important;
+    bottom: 0 !important;
     font-size: 7px !important;
   }
   .layers-panel {
-    right: 64px;
-    top: 14px;
-    width: 255px;
-    max-height: calc(100% - 85px);
+    right: 12px;
+    top: 68px;
+    width: min(320px, calc(100% - 24px));
+    max-height: calc(100% - 92px);
     overflow: auto;
     padding: 13px;
   }
@@ -2079,7 +2127,7 @@ small {
   letter-spacing: 1.1px;
 }
 .assessment-description,
-.airport-text a,
+.airport-text .location-focus,
 .source-item {
   font-size: 11px;
 }
@@ -2104,7 +2152,7 @@ small {
 .search > input {
   font-size: 13px;
 }
-@media (max-width: 700px) {
+@media (max-width: 920px) {
   .assessment-panel:not(.expanded) .assessment-scroll {
     display: none;
   }

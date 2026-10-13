@@ -10,6 +10,7 @@ import { readStored, writeStored } from '../../infrastructure/cache/storage';
 export const layerSchema = z.object({
   airports: z.boolean(),
   heliports: z.boolean(),
+  establishments: z.boolean().default(true),
   proximity: z.boolean(),
   prohibited: z.boolean(),
   restricted: z.boolean(),
@@ -20,6 +21,7 @@ export type Layers = z.infer<typeof layerSchema>;
 export const defaults = {
   airports: true,
   heliports: true,
+  establishments: true,
   proximity: true,
   prohibited: true,
   restricted: true,
@@ -62,7 +64,7 @@ interface State {
   theme: 'light' | 'dark';
   basemap: 'street' | 'satellite';
   selected: GeographicLocation | null;
-  target: GeographicLocation | null;
+  target: (GeographicLocation & { zoom?: number }) | null;
   selectionName: string;
   favorites: SavedLocation[];
   recent: SearchResult[];
@@ -71,7 +73,12 @@ interface State {
   setRadius: (value: 3 | 5 | 10) => void;
   setTheme: (value: 'light' | 'dark') => void;
   setBasemap: (value: 'street' | 'satellite') => void;
-  select: (point: GeographicLocation, name?: string, fly?: boolean) => void;
+  select: (
+    point: GeographicLocation,
+    name?: string,
+    fly?: boolean,
+    zoom?: number,
+  ) => void;
   remember: (result: SearchResult) => void;
   save: (name: string) => boolean;
   remove: (id: string) => void;
@@ -111,12 +118,12 @@ export const useExplorer = create<State>((set, get) => {
     setRadius: (radius) => persistPreferences({ radius }),
     setTheme: (theme) => persistPreferences({ theme }),
     setBasemap: (basemap) => persistPreferences({ basemap }),
-    select: (point, name = 'Selected location', fly = false) => {
+    select: (point, name = 'Selected location', fly = false, zoom = 11) => {
       coordinatesSchema.parse(point);
       set({
         selected: point,
         selectionName: name,
-        ...(fly ? { target: { ...point } } : {}),
+        ...(fly ? { target: { ...point, zoom } } : {}),
       });
     },
     remember: (result) => {

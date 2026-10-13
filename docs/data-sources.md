@@ -16,6 +16,10 @@ Street tiles use the documented OSM tile endpoint with visible attribution and n
 
 Overpass is requested only when the user presses Load nearby OSM at zoom 10+. A 0.3° bounding square limits requests; a 30-second application cooldown and one-day per-area cache reduce load. Requests time out after 30 seconds, validate response shapes, preserve prepared airport data on failure and deduplicate by IDs/codes/proximity. No unauthorized CORS proxy is used.
 
+### Sensitive establishments
+
+The nearby OSM request also includes `landuse=military`, `military=*`, `amenity=police`, and `amenity=prison`. Establishments use node coordinates or way/relation centers, are deduplicated by OSM identity, and retain source links and retrieval timestamps. They appear in a separate sensitive-establishment layer and within 25 km of selected points. Center distances do not measure distance to a site's perimeter; no exclusion radius is invented. OSM categories alone never produce a verified PROHIBITED or RESTRICTED assessment. Other establishments with officially published flight restrictions can be represented through the verified GeoJSON import below.
+
 ## Photon search
 
 [Official repository and public demo terms](https://github.com/komoot/photon#demo-server) · [API documentation](https://github.com/komoot/photon/blob/master/docs/api-v1.md)
@@ -23,6 +27,14 @@ Overpass is requested only when the user presses Load nearby OSM at zoom 10+. A 
 Photon supports search-as-you-type and permits reasonable public demo usage, but extensive traffic can be throttled or banned and availability is not guaranteed. Search uses a 650 ms debounce, at least three characters, a minimum 1.2 s interval between requests, cancellation, query caching and a Philippine bounding filter. Local airport and coordinate results remain available on failure. Photon responses are filtered to country code PH. Queries are sent to this provider; no geolocation is sent to search automatically.
 
 Use the configured endpoint to select a suitably provisioned Photon-compatible service before scaling. This app does not call public Nominatim autocomplete or use map tiles as a geocoding API.
+
+## Flight planning: DJI FPV and wind
+
+The first drone profile uses [DJI FPV support specifications](https://www.dji.com/support/product/dji-fpv) and the [DJI FPV User Manual, specifications p. 61](https://dl.djicdn.com/downloads/DJI_FPV/20210615/DJI_FPV_User_Manual_EN.pdf). Published limits are 15/27/39 m/s for Normal/Sport/Manual, approximately 20 minutes of flight at 40 km/h without wind, and 13.8 m/s wind resistance in the manual (Level 6 on the support page). Maximum figures are test conditions, not recommended cruise settings or guaranteed endurance. The included SVG is an original illustrative quadcopter icon, not a DJI-supplied asset.
+
+[Open-Meteo forecast documentation](https://open-meteo.com/en/docs) supplies hourly 10 m wind speed, direction, and gusts for the start location. Requests use m/s and Unix timestamps, up to seven days, ten-minute caching, and a short debounce while moving the start. Departure input is explicitly Philippine time (UTC+8). Across the budget window, the estimator uses the strongest hourly mean wind and its direction, plus the maximum gust for warnings. Missing/null data, unsupported dates, and provider failures remain unverified, with an explicitly labeled calm-air baseline or user-entered manual wind. Forecasts describe the start location, not wind along the whole route or at flight altitude. The public Open-Meteo endpoint is for non-commercial use; configure an appropriate licensed service before commercial deployment.
+
+Each segment uses a constant-air-speed wind-vector approximation: crosswind correction reduces the forward component, while headwind/tailwind reduces/increases ground speed. Unmaintainable tracks have no finite time estimate. Gusts trigger warnings, not a detailed gust simulation. The time budget is capped by 20 minutes minus the user's time reserve; the takeoff/landing/hover allowance is added separately. No battery discharge curve, maneuver penalty, terrain/obstacle clearance, vertical profile, or radio range guarantee is modeled. Full segments are checked against verified polygons overlapping the planned time window, including the return leg. Official coverage remains incomplete. No mission is sent to or executed by a drone.
 
 ## CAAP official regulatory information
 

@@ -21,6 +21,8 @@ import {
 import { isStale } from '../../../domain/services/assessment';
 import { errorMessage } from '../../../infrastructure/api/http';
 import Notice from '../common/Notice';
+import EstablishmentAdvisory from './EstablishmentAdvisory';
+import LocationFocusButton from '../common/LocationFocusButton';
 import { COLORS } from '../../../shared/constants/map';
 export default function AssessmentPanel() {
   const { selected, selectionName, radius, save } = useExplorer();
@@ -88,7 +90,13 @@ export default function AssessmentPanel() {
               <div className="eyebrow">
                 <MapPin size={13} /> SELECTED LOCATION
               </div>
-              <h3>{selectionName}</h3>
+              <h3>
+                <LocationFocusButton
+                  location={selected}
+                  name={selectionName}
+                  onFocus={() => setExpanded(false)}
+                />
+              </h3>
               <div className="coordinates">
                 {selected.latitude.toFixed(5)}°, {selected.longitude.toFixed(5)}
                 °
@@ -170,13 +178,11 @@ export default function AssessmentPanel() {
                         )}
                       </div>
                       <div className="airport-text">
-                        <a
-                          href={a.sourceReference}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {a.name}
-                        </a>
+                        <LocationFocusButton
+                          location={a}
+                          name={a.name}
+                          onFocus={() => setExpanded(false)}
+                        />
                         <small>
                           {a.icaoCode ?? a.iataCode ?? 'No identifier'} ·{' '}
                           {a.type.replaceAll('_', ' ')}
@@ -201,6 +207,10 @@ export default function AssessmentPanel() {
                     </div>
                   )}
                 </div>
+                <EstablishmentAdvisory
+                  location={selected}
+                  onFocus={() => setExpanded(false)}
+                />
                 <div className="section-heading">
                   <span>OFFICIAL AIRSPACE</span>
                   <span className="coverage-badge">Incomplete</span>

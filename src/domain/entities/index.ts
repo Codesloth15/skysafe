@@ -24,6 +24,17 @@ export interface Airport extends GeographicLocation {
   updatedAt: string;
 }
 export type Heliport = Airport & { type: 'heliport' };
+export interface SensitiveEstablishment extends GeographicLocation {
+  id: string;
+  name: string;
+  type: 'military' | 'police' | 'prison';
+  sourceReference: string;
+  updatedAt: string;
+}
+export interface SupplementaryArea {
+  airports: Airport[];
+  establishments: SensitiveEstablishment[];
+}
 export interface DataSource {
   name: string;
   url: string;

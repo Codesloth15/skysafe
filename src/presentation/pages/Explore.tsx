@@ -2,9 +2,22 @@ import { MapPin, ArrowUpRight } from 'lucide-react';
 import MapView from '../components/map/MapView';
 import AssessmentPanel from '../components/airspace/AssessmentPanel';
 import LayersPanel from '../components/map/LayersPanel';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAirspace } from '../hooks/data';
+import { useFlightPlan } from '../../app/store/use-flight-plan';
+import FlightPlannerPanel from '../components/airspace/FlightPlannerPanel';
 export default function Explore({ checker = false }: { checker?: boolean }) {
   const [layersOpen, setLayersOpen] = useState(false);
+  const { active, setActive } = useFlightPlan();
+  const airspace = useAirspace();
+  useEffect(() => {
+    useFlightPlan
+      .getState()
+      .setAirspace(
+        airspace.data?.zones ?? [],
+        airspace.isError ? 'error' : airspace.isPending ? 'loading' : 'ready',
+      );
+  }, [airspace.data, airspace.isError, airspace.isPending]);
   return (
     <div className="explore-page">
       <div className="page-heading">
@@ -30,6 +43,22 @@ export default function Explore({ checker = false }: { checker?: boolean }) {
           CAAP AIS <ArrowUpRight size={16} />
         </a>
       </div>
+      <div className="explorer-modebar" aria-label="Map mode">
+        <button aria-pressed={!active} onClick={() => setActive(false)}>
+          <MapPin size={15} />
+          Inspect location
+        </button>
+        <button
+          aria-pressed={active}
+          onClick={() => {
+            setLayersOpen(false);
+            setActive(true);
+          }}
+        >
+          <img src="/icons/dji-fpv.svg" alt="" width="24" height="24" />
+          Plan flight
+        </button>
+      </div>
       <div className="explorer-grid">
         <section
           className="map-frame"
@@ -42,7 +71,7 @@ export default function Explore({ checker = false }: { checker?: boolean }) {
             <span>Click anywhere on the map to inspect a location</span>
           </div>
         </section>
-        <AssessmentPanel />
+        {active ? <FlightPlannerPanel /> : <AssessmentPanel />}
       </div>
     </div>
   );

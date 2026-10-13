@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useMapEvents } from 'react-leaflet';
 import { useExplorer } from '../../../app/store/use-explorer';
 import type { MapBounds } from '../../../domain/entities';
+import { useFlightPlan } from '../../../app/store/use-flight-plan';
+import { toast } from 'sonner';
 export default function MapBehavior({
   onViewport,
 }: {
@@ -10,10 +12,17 @@ export default function MapBehavior({
   const target = useExplorer((s) => s.target);
   const timeout = useRef<ReturnType<typeof setTimeout>>();
   const map = useMapEvents({
-    click: (e) =>
-      useExplorer
-        .getState()
-        .select({ latitude: e.latlng.lat, longitude: e.latlng.lng }),
+    click: (e) => {
+      const point = { latitude: e.latlng.lat, longitude: e.latlng.lng };
+      const plan = useFlightPlan.getState();
+      if (plan.active && plan.drawing) {
+        if (!plan.addPoint(point))
+          toast.info(
+            useFlightPlan.getState().actionError ??
+              'Choose a distinct point within the Philippine region (maximum 30 waypoints).',
+          );
+      } else useExplorer.getState().select(point);
+    },
     moveend: update,
     zoomend: update,
   });
@@ -54,7 +63,7 @@ export default function MapBehavior({
     if (target)
       map.flyTo(
         [target.latitude, target.longitude],
-        Math.max(map.getZoom(), 11),
+        Math.max(map.getZoom(), target.zoom ?? 11),
         { duration: 1.1 },
       );
   }, [target, map]);

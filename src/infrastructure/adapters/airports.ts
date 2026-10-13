@@ -84,7 +84,7 @@ export function normalizeOurAirports(
     }),
   );
 }
-const osmSchema = z.object({
+export const osmSchema = z.object({
   elements: z.array(
     z.object({
       id: z.number(),
@@ -102,6 +102,7 @@ export function normalizeOverpass(
 ): Airport[] {
   return deduplicateAirports(
     osmSchema.parse(input).elements.flatMap((e) => {
+      if (!['aerodrome', 'heliport'].includes(e.tags?.aeroway ?? '')) return [];
       const p = coordinatesSchema.safeParse({
         latitude: e.lat ?? e.center?.lat,
         longitude: e.lon ?? e.center?.lon,

@@ -10,6 +10,8 @@ import {
   Minus,
   Globe,
   LoaderCircle,
+  MoreHorizontal,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,7 +19,7 @@ import { useExplorer } from '../../../app/store/use-explorer';
 import { deduplicateAirports } from '../../../domain/services/geography';
 import { services } from '../../../app/services';
 import { errorMessage } from '../../../infrastructure/api/http';
-import type { Airport } from '../../../domain/entities';
+import type { Airport, SensitiveEstablishment } from '../../../domain/entities';
 export default function MapControls({
   onLayers,
   frame,
@@ -30,6 +32,7 @@ export default function MapControls({
   const [locating, setLocating] = useState(false);
   const [osmBusy, setOsmBusy] = useState(false);
   const [full, setFull] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const toolsRef = useRef<HTMLDivElement>(null);
   const osmRef = useRef<HTMLButtonElement>(null);
   const mounted = useRef(true);
@@ -109,14 +112,27 @@ export default function MapControls({
     try {
       const data = await client.fetchQuery({
         queryKey: ['osm-area', bounds],
-        queryFn: ({ signal }) => services.overpass.getArea(bounds, signal),
+        queryFn: ({ signal }) => services.overpass.getAreaData(bounds, signal),
         staleTime: 86400000,
         retry: false,
       });
       client.setQueryData<Airport[]>(['osm-supplement'], (old) =>
-        deduplicateAirports([...(old ?? []), ...data]),
+        deduplicateAirports([...(old ?? []), ...data.airports]),
       );
-      toast.success('Loaded ' + data.length + ' OSM features for this area.');
+      client.setQueryData<SensitiveEstablishment[]>(
+        ['osm-establishments'],
+        (old) => [
+          ...new Map(
+            [...(old ?? []), ...data.establishments].map((item) => [
+              item.id,
+              item,
+            ]),
+          ).values(),
+        ],
+      );
+      toast.success(
+        `Loaded ${data.airports.length} airports and ${data.establishments.length} sensitive establishments for this area.`,
+      );
     } catch (error) {
       toast.error(
         errorMessage(error) + ' Prepared airport data remains available.',
@@ -126,9 +142,16 @@ export default function MapControls({
     }
   }
   return (
-    <>
+    <div className={'map-controls ' + (moreOpen ? 'more-open' : '')}>
       <div className="map-tools" ref={toolsRef}>
-        <button title="Map layers" aria-label="Map layers" onClick={onLayers}>
+        <button
+          title="Map layers"
+          aria-label="Map layers"
+          onClick={() => {
+            setMoreOpen(false);
+            onLayers();
+          }}
+        >
           <Layers size={19} />
         </button>
         <button
@@ -144,6 +167,15 @@ export default function MapControls({
           )}
         </button>
         <button
+          className="mobile-more-tools"
+          aria-label={moreOpen ? 'Close map tools' : 'More map tools'}
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen(!moreOpen)}
+        >
+          {moreOpen ? <X size={19} /> : <MoreHorizontal size={19} />}
+        </button>
+        <button
+          className="secondary-map-tool"
           title="Toggle fullscreen map"
           aria-label="Toggle fullscreen map"
           onClick={fullscreen}
@@ -151,19 +183,30 @@ export default function MapControls({
           {full ? <Minimize size={19} /> : <Maximize size={19} />}
         </button>
         <span className="tool-separator" />
-        <button aria-label="Zoom in" onClick={() => map.zoomIn()}>
+        <button
+          className="secondary-map-tool"
+          aria-label="Zoom in"
+          onClick={() => map.zoomIn()}
+        >
           <Plus size={20} />
         </button>
-        <button aria-label="Zoom out" onClick={() => map.zoomOut()}>
+        <button
+          className="secondary-map-tool"
+          aria-label="Zoom out"
+          onClick={() => map.zoomOut()}
+        >
           <Minus size={20} />
         </button>
       </div>
       <button
         className="osm-button"
         ref={osmRef}
-        onClick={loadOSM}
+        onClick={() => {
+          setMoreOpen(false);
+          void loadOSM();
+        }}
         disabled={osmBusy}
-        title="Explicitly load aerodromes and heliports in a 0.3° area around the map center"
+        title="Load nearby airports, military bases, police stations, and prisons around the map center"
       >
         {osmBusy ? (
           <LoaderCircle className="spin" size={15} />
@@ -172,6 +215,6 @@ export default function MapControls({
         )}
         <span>{osmBusy ? 'Loading OSM…' : 'Load nearby OSM'}</span>
       </button>
-    </>
+    </div>
   );
 }
